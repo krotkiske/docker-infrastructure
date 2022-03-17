@@ -4,3 +4,4 @@ rabbitmq
 grafana
 prometheus
 influxdb
+sql

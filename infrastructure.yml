@@ -102,5 +102,7 @@ services:
     ports:
       - 1433:1433
     restart: always
-    #volumes:
-      #- ./infrastructure/sql:/var/opt/mssql
+    volumes:
+      - ./infrastructure/sql/data:/var/opt/mssql/data
+      - ./infrastructure/sql/log:/var/opt/mssql/log
+      - ./infrastructure/sql/secrets:/var/opt/mssql/secrets
