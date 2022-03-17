@@ -1,10 +1,18 @@
+# UP-COMMAND: docker-compose --file .\infrastructure.yml up 
+# DOWN-COMMAND: docker-compose --file .\infrastructure.yml down 
 version: '3.4'
+
+networks:
+  infrastructure:
+    name: infrastructure
 
 services:
 
   telegraf:
     container_name: telegraf
     image: telegraf:1.18-alpine
+    networks:
+      - infrastructure
     volumes:
       - ./infrastructure/telegraf.conf:/etc/telegraf/telegraf.conf:ro
     depends_on:
@@ -12,19 +20,38 @@ services:
     links:
       - influxdb
     ports:
-    - '127.0.0.1:8125:8125/udp'
+      - '127.0.0.1:8125:8125/udp'
+    restart: always
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    links:
+      - grafana
+      - influxdb
+    restart: always 
 
   influxdb:
     container_name: influxdb
     image: influxdb:1.8
+    networks:
+      - infrastructure
+    volumes:
+      - ./infrastructure/influxdb/_data:/var/lib/influxdb
     ports:
       - "8086:8086"
     environment:
       - INFLUXDB_DB=influx
+    restart: always
 
   grafana:
     container_name: grafana
     image: grafana/grafana:latest
+    networks:
+      - infrastructure
+    user: "$UID:$GID"
     ports:
       - "3000:3000"
     environment:
@@ -34,12 +61,14 @@ services:
       - GRAFANA_VERSION=latest
       - GF_INSTALL_PLUGINS=grafana-piechart-panel  
     volumes:
-      - ./infrastructure/grafana:/etc/grafana/provisioning/
-      - ./infrastructure/grafana/dashboards/:/var/lib/grafana/dashboards/
-
+      - ./infrastructure/grafana/data:/var/lib/grafana
+    restart: always
+    
   seq:
     container_name: seq
     image: datalust/seq:latest
+    networks:
+      - infrastructure
     ports:
       - "5341:80"
     environment:
@@ -51,21 +80,27 @@ services:
   rabbitmq:
     container_name: 'rabbitmq'
     image: rabbitmq:3-management-alpine
+    networks:
+      - infrastructure
     ports:
         - 5671:5671
         - 5672:5672
         - 15672:15672
     volumes:
-        - ./infrastructure/rabbitmq/data/:/var/lib/rabbitmq
-        - ./infrastructure/rabbitmq/log/:/var/log/rabbitmq
+        - ./infrastructure/rabbitmq/_data/:/var/lib/rabbitmq
+        - ./infrastructure/rabbitmq/_log/:/var/log/rabbitmq
+    restart: always
 
   db:
     container_name: sqlserver
     image: sql_service
+    networks:
+      - infrastructure
     build:
       context: .
       dockerfile: infrastructure/sql/Dockerfile
     ports:
       - 1433:1433
+    restart: always
     #volumes:
       #- ./infrastructure/sql:/var/opt/mssql
