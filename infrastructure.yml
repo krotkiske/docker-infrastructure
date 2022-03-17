@@ -1,18 +1,10 @@
-# UP-COMMAND: docker-compose --file .\infrastructure.yml up 
-# DOWN-COMMAND: docker-compose --file .\infrastructure.yml down 
 version: '3.4'
-
-networks:
-  infrastructure:
-    name: infrastructure
 
 services:
 
   telegraf:
     container_name: telegraf
     image: telegraf:1.18-alpine
-    networks:
-      - infrastructure
     volumes:
       - ./infrastructure/telegraf.conf:/etc/telegraf/telegraf.conf:ro
     depends_on:
@@ -25,8 +17,6 @@ services:
   influxdb:
     container_name: influxdb
     image: influxdb:1.8
-    networks:
-      - infrastructure
     ports:
       - "8086:8086"
     environment:
@@ -35,8 +25,6 @@ services:
   grafana:
     container_name: grafana
     image: grafana/grafana:latest
-    networks:
-      - infrastructure
     ports:
       - "3000:3000"
     environment:
@@ -52,8 +40,6 @@ services:
   seq:
     container_name: seq
     image: datalust/seq:latest
-    networks:
-      - infrastructure
     ports:
       - "5341:80"
     environment:
@@ -65,8 +51,6 @@ services:
   rabbitmq:
     container_name: 'rabbitmq'
     image: rabbitmq:3-management-alpine
-    networks:
-      - infrastructure
     ports:
         - 5671:5671
         - 5672:5672
@@ -78,8 +62,6 @@ services:
   db:
     container_name: sqlserver
     image: sql_service
-    networks:
-      - infrastructure
     build:
       context: .
       dockerfile: infrastructure/sql/Dockerfile
