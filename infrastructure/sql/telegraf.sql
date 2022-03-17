@@ -1,0 +1,8 @@
+USE master;
+GO
+CREATE LOGIN [telegraf] WITH PASSWORD = N'YourS3cureP@ass';
+GO
+GRANT VIEW SERVER STATE TO [telegraf];
+GO
+GRANT VIEW ANY DEFINITION TO [telegraf];
+GO

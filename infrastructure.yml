@@ -1,0 +1,71 @@
+version: '3.4'
+
+services:
+
+  telegraf:
+    container_name: telegraf
+    image: telegraf:1.18-alpine
+    volumes:
+      - ./infrastructure/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - influxdb
+    links:
+      - influxdb
+    ports:
+    - '127.0.0.1:8125:8125/udp'
+
+  influxdb:
+    container_name: influxdb
+    image: influxdb:1.8
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=influx
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+      - GRAFANA_VERSION=latest
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel  
+    volumes:
+      - ./infrastructure/grafana:/etc/grafana/provisioning/
+      - ./infrastructure/grafana/dashboards/:/var/lib/grafana/dashboards/
+
+  seq:
+    container_name: seq
+    image: datalust/seq:latest
+    ports:
+      - "5341:80"
+    environment:
+      - ACCEPT_EULA=Y
+    restart: unless-stopped
+    volumes:
+      - ./infrastructure/seq-data:/data
+
+  rabbitmq:
+    container_name: 'rabbitmq'
+    image: rabbitmq:3-management-alpine
+    ports:
+        - 5671:5671
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ./infrastructure/rabbitmq/data/:/var/lib/rabbitmq
+        - ./infrastructure/rabbitmq/log/:/var/log/rabbitmq
+
+  db:
+    container_name: sqlserver
+    image: sql_service
+    build:
+      context: .
+      dockerfile: infrastructure/sql/Dockerfile
+    ports:
+      - 1433:1433
+    #volumes:
+      #- ./infrastructure/sql:/var/opt/mssql
